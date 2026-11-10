@@ -1,0 +1,44 @@
+name: Build APK
+
+on:
+  # Se ejecuta cuando haces push a main o cuando lo lanzas manualmente
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:   # Botón "Run workflow" en GitHub
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout del código
+        uses: actions/checkout@v4
+
+      - name: ☕ Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 🐦 Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'   # Puedes subir la versión si quieres
+          channel: 'stable'
+          cache: true
+
+      - name: 📦 Obtener dependencias
+        run: flutter pub get
+
+      - name: 🔍 Analizar código (opcional)
+        run: flutter analyze --no-fatal-infos || true
+
+      - name: 🏗️ Compilar APK (release)
+        run: flutter build apk --release
+
+      - name: 📤 Subir el APK como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: corneta-solfeo-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
