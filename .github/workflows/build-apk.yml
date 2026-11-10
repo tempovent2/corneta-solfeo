@@ -1,10 +1,11 @@
+
 name: Build APK
 
 on:
   # Se ejecuta cuando haces push a main o cuando lo lanzas manualmente
   push:
     branches: [ main, master ]
-  workflow_dispatch:   # Botón "Run workflow" en GitHub
+  workflow_dispatch:
 
 jobs:
   build:
@@ -29,6 +30,30 @@ jobs:
 
       - name: 🏗️ Generar estructura Android
         run: flutter create --platforms=android --org com.tempovent2 --project-name corneta_solfeo .
+
+      - name: 🛠️ Actualizar complemento Kotlin
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          file = Path("android/settings.gradle")
+          content = file.read_text()
+
+          pattern = r'(id\s+["\']org\.jetbrains\.kotlin\.android["\']\s+version\s+["\'])[^"\']+(["\'])'
+
+          updated, count = re.subn(
+              pattern,
+              r'\g<1>2.0.21\g<2>',
+              content
+          )
+
+          if count != 1:
+              raise SystemExit("No se pudo identificar la version de Kotlin en settings.gradle")
+
+          file.write_text(updated)
+          print("Kotlin actualizado a 2.0.21")
+          PY
 
       - name: 📦 Obtener dependencias
         run: flutter pub get
